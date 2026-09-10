@@ -135,8 +135,8 @@
   .pri-card .rank{font-family:var(--font-mono);font-size:11px;color:var(--accent);letter-spacing:.05em;}
   .pri-card .name{font-family:var(--font-display);font-size:17px;font-weight:600;margin:2px 0 4px;}
   .pri-card .cat{font-size:12px;color:var(--muted);margin-bottom:8px;}
-  .pri-card .action{font-size:13.5px;line-height:1.5;background:var(--paper);border-radius:6px;padding:9px 12px;}
-  .pri-card .action b{color:var(--accent);}
+  .pri-card .action, .blind-card .action{font-size:13.5px;line-height:1.5;background:var(--paper);border-radius:6px;padding:9px 12px;margin-top:8px;}
+  .pri-card .action b, .blind-card .action b{color:var(--accent);}
 
   .warn{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--surface);border-radius:8px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:var(--muted);margin-top:18px;}
 
@@ -440,8 +440,11 @@ function computeResults(){
   const totalPuntaje = rows.reduce((s,r)=>s+r.nivel,0)/rows.length;
 
   const blindRows = rows.filter(r=>r.blind && r.brecha>0);
+  // Ordenado solo por prioridad real (sin forzar las brechas ciegas al frente): la visibilidad
+  // de las ciegas ya la da el panel de "Brechas ciegas" de forma incondicional, así que este
+  // ranking puede reflejar impacto real sin que una ciega casi cerrada tape una brecha más grande.
   const top3 = rows.filter(r=>r.prioridad>0)
-    .sort((a,b)=> (b.blind - a.blind) || (b.prioridad - a.prioridad) || (a.q.cat - b.q.cat))
+    .sort((a,b)=> (b.prioridad - a.prioridad) || (a.q.cat - b.q.cat))
     .slice(0,3);
 
   const evidencePct = highTotal>0 ? Math.round(100*highWithEvidence/highTotal) : null;
@@ -585,6 +588,7 @@ function render(){
         <div class="blind-card">
           <div class="name">${row.q.texto}</div>
           <div class="why">Tu rol actual (${r.actual}) pide nivel ${row.reqAct} acá; el rol objetivo (${r.objetivo}) pide nivel 4. No se cierra sola con el trabajo diario — hay que buscarla a propósito.</div>
+          <div class="action"><b>Cómo verificarlo:</b> ${accionPara(row.q.metodo)}</div>
         </div>`).join('');
     } else {
       blindHtml = `<div class="neutral-note">No se detectaron brechas ciegas en esta transición (${r.actual} → ${r.objetivo}).</div>`;
