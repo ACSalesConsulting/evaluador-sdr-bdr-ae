@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa de Brechas — Reunión de Forecast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light dark;
+    --ink:#171B21;
+    --paper:#EEF1EE;
+    --surface:#FFFFFF;
+    --accent:#B8862B;
+    --accent-ink:#171B21;
+    --teal:#2E6E63;
+    --teal-soft:#DCEAE6;
+    --rose:#A8402E;
+    --rose-soft:#F3DEDA;
+    --line:#D7D9D3;
+    --muted:#5B6058;
+    --font-display:'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-body:'IBM Plex Sans', -apple-system, Segoe UI, sans-serif;
+    --font-mono:'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#ECEEEA; --paper:#14171C; --surface:#1B1F25; --accent:#D9A857; --accent-ink:#171B21;
+      --teal:#5FB6A5; --teal-soft:#1D3A34; --rose:#E0806A; --rose-soft:#3B211D; --line:#2B2F35; --muted:#9AA098;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#ECEEEA; --paper:#14171C; --surface:#1B1F25; --accent:#D9A857; --accent-ink:#171B21;
+    --teal:#5FB6A5; --teal-soft:#1D3A34; --rose:#E0806A; --rose-soft:#3B211D; --line:#2B2F35; --muted:#9AA098;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:var(--font-body);}
+  h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;}
+  .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
+  button{font-family:inherit;cursor:pointer;}
+  input{font-family:inherit;}
+  button:focus-visible, .opt:focus-visible, input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
+
+  #app{max-width:980px;margin:0 auto;padding:28px 20px 64px;}
+
+  .intro{max-width:640px;margin:40px auto;}
+  .eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+  .intro h1{font-size:34px;font-weight:600;margin:8px 0 18px;line-height:1.15;}
+  .intro p{font-size:15.5px;line-height:1.6;color:var(--ink);margin:0 0 14px;}
+  .disclaimer{border:1px solid var(--line);border-left:3px solid var(--rose);background:var(--surface);border-radius:6px;padding:14px 16px;font-size:14px;line-height:1.55;color:var(--muted);margin:22px 0 30px;}
+  .disclaimer strong{color:var(--ink);}
+  .role-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:560px){.role-grid{grid-template-columns:1fr;}}
+  .role-card{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:22px 20px;text-align:left;transition:border-color .15s, transform .15s;}
+  .role-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+  .role-card .tag{font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.04em;}
+  .role-card .name{font-family:var(--font-display);font-size:26px;font-weight:600;margin:4px 0 8px;}
+  .role-card .arrow{font-size:14px;color:var(--accent);font-weight:500;}
+
+  .shell{display:grid;grid-template-columns:220px 1fr;gap:32px;align-items:start;}
+  @media (max-width:760px){.shell{grid-template-columns:1fr;}}
+  .topbar{grid-column:1/-1;margin-bottom:8px;}
+  .barline{height:3px;background:var(--line);border-radius:2px;overflow:hidden;}
+  .barfill{height:100%;background:var(--accent);transition:width .25s ease;}
+  .topmeta{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:8px;}
+
+  .rail{display:flex;flex-direction:column;gap:2px;position:sticky;top:20px;}
+  @media (max-width:760px){.rail{flex-direction:row;overflow-x:auto;position:static;gap:8px;padding-bottom:6px;}}
+  .stage{border-left:3px solid transparent;padding:10px 12px;border-radius:0 6px 6px 0;}
+  @media (max-width:760px){.stage{border-left:none;border-bottom:3px solid transparent;flex:0 0 auto;white-space:nowrap;}}
+  .stage.active{border-color:var(--accent);background:var(--surface);}
+  .stage.done .stage-name{color:var(--muted);}
+  .stage-name{font-size:13px;font-weight:500;}
+  .stage-count{font-family:var(--font-mono);font-size:11px;color:var(--muted);}
+  .stage.active .stage-name{color:var(--ink);font-weight:600;}
+  .stage.done .stage-dot{background:var(--teal);}
+  .stage-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--line);margin-right:7px;}
+  .stage.active .stage-dot{background:var(--accent);}
+
+  .qcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:26px 26px 22px;}
+  .qmeta{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .qtext{font-family:var(--font-display);font-size:22px;font-weight:600;line-height:1.3;margin-bottom:20px;}
+  .options{display:flex;flex-direction:column;gap:8px;}
+  .opt{display:block;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:13px 16px;font-size:14.5px;line-height:1.5;color:var(--ink);transition:border-color .12s, background .12s;}
+  .opt:hover{border-color:var(--accent);}
+  .opt.sel{border-color:var(--accent);background:var(--surface);box-shadow:inset 3px 0 0 var(--accent);}
+
+  .evidence{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line);}
+  .evidence-label{font-size:13px;color:var(--muted);margin-bottom:10px;}
+  .evidence .opt{font-size:13.5px;padding:11px 14px;}
+
+  .note{margin-top:14px;font-size:12.5px;color:var(--muted);font-style:italic;}
+
+  .navrow{display:flex;justify-content:space-between;margin-top:22px;}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:10px 18px;font-size:14px;font-weight:500;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+  .btn.primary:disabled{opacity:.35;}
+
+  .res-head{display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:22px 24px;margin-bottom:22px;}
+  .res-path{font-family:var(--font-display);font-size:24px;font-weight:600;}
+  .res-path .arrow{color:var(--accent);margin:0 6px;}
+  .band-chip{display:inline-block;font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;padding:6px 12px;border-radius:20px;font-weight:500;}
+  .band-1{background:var(--rose-soft);color:var(--rose);}
+  .band-2{background:var(--rose-soft);color:var(--rose);}
+  .band-3{background:var(--teal-soft);color:var(--teal);}
+  .band-4{background:var(--teal-soft);color:var(--teal);}
+  .band-text{flex-basis:100%;font-size:14.5px;line-height:1.55;color:var(--muted);margin-top:2px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start;}
+  @media (max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;}
+  .panel h2{font-size:17px;font-weight:600;margin-bottom:16px;}
+  .catrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-bottom:12px;}
+  .catrow .label{font-size:13.5px;}
+  .catbar{grid-column:1/-1;height:6px;background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:2px;}
+  .catbar i{display:block;height:100%;background:var(--accent);}
+  .catval{font-family:var(--font-mono);font-size:12.5px;color:var(--muted);}
+  .total-row{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:6px;padding-top:14px;}
+  .total-row .big{font-family:var(--font-mono);font-size:26px;font-weight:500;}
+
+  .blind-card{border:1px solid var(--line);border-left:3px solid var(--rose);border-radius:8px;padding:12px 14px;margin-bottom:10px;background:var(--rose-soft);}
+  .blind-card .name{font-weight:600;font-size:14px;margin-bottom:3px;}
+  .blind-card .why{font-size:12.5px;color:var(--muted);line-height:1.5;}
+  .neutral-note{font-size:13.5px;color:var(--muted);line-height:1.55;}
+
+  .pri-card{border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:10px;}
+  .pri-card .rank{font-family:var(--font-mono);font-size:11px;color:var(--accent);letter-spacing:.05em;}
+  .pri-card .name{font-family:var(--font-display);font-size:17px;font-weight:600;margin:2px 0 4px;}
+  .pri-card .cat{font-size:12px;color:var(--muted);margin-bottom:8px;}
+  .pri-card .action{font-size:13.5px;line-height:1.5;background:var(--paper);border-radius:6px;padding:9px 12px;}
+  .pri-card .action b{color:var(--accent);}
+
+  .warn{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--surface);border-radius:8px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:var(--muted);margin-top:18px;}
+
+  .capture{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:20px 22px;margin-top:20px;}
+  .capture h2{font-size:16px;margin-bottom:6px;}
+  .capture p{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5;}
+  .capture-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .capture input[type=email]{flex:1 1 240px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:7px;padding:10px 14px;font-size:14px;}
+  .capture .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
+  .capture-msg{font-size:13px;margin-top:10px;}
+  .capture-msg.ok{color:var(--teal);}
+  .capture-msg.err{color:var(--rose);}
+  .capture-consent{font-size:11.5px;color:var(--muted);margin-top:10px;}
+
+  .footer-disc{margin-top:26px;font-size:12.5px;color:var(--muted);font-style:italic;line-height:1.6;}
+  .restart{margin-top:18px;}
+  .credit{margin-top:40px;font-size:11.5px;color:var(--muted);text-align:center;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============ CONFIG ============ */
+// TODO: reemplazar por la URL del webhook de producción de n8n antes de deployar.
+// Ver README.md -> "Configurar n8n" para el paso a paso.
+const WEBHOOK_URL = "https://TU-INSTANCIA-N8N.example.com/webhook/evaluador-sdr-bdr-ae";
+
+/* ============ DATA ============ */
+const CATS = {
+  1:"Prospección y generación de demanda",
+  2:"Diagnóstico y calificación",
+  3:"Comunicación y persuasión",
+  4:"Gestión y método",
+  5:"Autogestión y desarrollo"
+};
+
+const METODO_ACCION = {
+  OBS:"Pedile a tu manager o a un par que escuche o vea una interacción real tuya reciente y te dé feedback puntuado",
+  ART:"Compartí un artefacto real tuyo (mail, nota de CRM, lista de cuentas, propuesta) para que alguien lo revise con vos",
+  RES:"Sacá el dato real (conversión, % de oportunidades aceptadas, precisión de forecast) de tu CRM o reporte de los últimos 90 días",
+  SIM:"Pedí un role-play con escenario sorpresa grabado, y que alguien te dé feedback",
+  TER:"Pedile a tu manager, un par o el AE que trabajó con vos un ejemplo concreto y reciente que respalde o cuestione tu puntaje"
+};
+function accionPara(metodo){
+  return metodo.split('+').map((m,i)=> i===0 ? METODO_ACCION[m] : METODO_ACCION[m].charAt(0).toLowerCase()+METODO_ACCION[m].slice(1)).join('. Además, ') + '.';
+}
+
+const Q = [
+{id:1,cat:1,texto:"Investigación de cuentas y armado de listas",metodo:"ART",req:{SDR:2,BDR:4,AE:3},
+ niveles:["No armo ni reviso listas de cuentas; me llegan armadas y no las cuestiono.",
+ "Sigo una lista o criterio que me da otro; sin eso, no sabría por dónde priorizar cuentas.",
+ "Puedo armar una lista con criterios estándar (ICP, industria, tamaño) en situaciones habituales.",
+ "Ajusto listas con criterio propio incluso en mercados poco habituales, con resultados repetibles.",
+ "Diseño o mejoro el proceso de armado de listas del equipo y se lo enseño a otro."],
+ evid:["Alguien revisó una lista de cuentas real mía en los últimos 90 días","Tengo listas armadas pero nadie las revisó conmigo","Es mi percepción propia, no tengo un artefacto para mostrar"]},
+
+{id:2,cat:1,texto:"Llamada en frío",metodo:"OBS",req:{SDR:2,BDR:4,AE:3},
+ niveles:["No hago llamadas en frío, o sigo un guion palabra por palabra y me cuelgo si algo cambia.",
+ "Hago llamadas con guion; si la conversación se desvía, pierdo el control.",
+ "Llevo una llamada estándar sin guion rígido, cuando el prospecto reacciona de forma esperable.",
+ "Sostengo la llamada incluso con reacciones difíciles o inesperadas, con resultados repetibles.",
+ "Adapto mi enfoque según el contexto, mis resultados están por encima del promedio y entreno a otros."],
+ evid:["Un manager o par escuchó una llamada real mía en los últimos 90 días y la puntuó","Tengo llamadas grabadas pero sin revisión externa","Es percepción propia, sin llamada revisada"]},
+
+{id:3,cat:1,texto:"Outbound multicanal (mail, LinkedIn, señales)",metodo:"ART+RES",req:{SDR:2,BDR:4,AE:3},
+ niveles:["No uso canales propios de outbound; dependo de secuencias armadas por otro.",
+ "Envío outbound siguiendo una plantilla; fuera de ella no sé qué escribir.",
+ "Combino mail, LinkedIn y señales de forma estándar para abrir conversaciones típicas.",
+ "Ajusto mi mezcla de canales y mensajes según la cuenta, y sostengo tasas de respuesta en el tiempo.",
+ "Diseño secuencias que otros del equipo adoptan, con conversión consistentemente por encima del promedio."],
+ evid:["Tengo métricas de conversión y alguien revisó piezas reales mías","Tengo métricas pero nadie revisó el contenido","No tengo métrica ni revisión, es percepción propia"]},
+
+{id:4,cat:1,texto:"Mapeo de stakeholders y multithreading",metodo:"ART",req:{SDR:1,BDR:2,AE:4},
+ niveles:["No identifico quiénes más participan en la decisión más allá de mi contacto principal.",
+ "Sé que existen otros stakeholders, pero solo llego a ellos si alguien más me los presenta.",
+ "En cuentas estándar, identifico y contacto a más de un stakeholder por mi cuenta.",
+ "Mapeo y trabajo múltiples stakeholders incluso en cuentas complejas, con resultados repetibles.",
+ "Diseño estrategias de multithreading para cuentas grandes y le enseño a otro cómo mapear una cuenta."],
+ evid:["Tengo un mapa de stakeholders real que alguien revisó conmigo","Tengo el mapa pero nadie lo revisó","No tengo un artefacto, es percepción propia"]},
+
+{id:5,cat:2,texto:"Preguntas de discovery",metodo:"OBS",req:{SDR:3,BDR:2,AE:4},
+ niveles:["No hago preguntas de discovery; paso directo a presentar el producto.",
+ "Hago preguntas de una lista fija; si la respuesta es inesperada, no sé cómo repreguntar.",
+ "Hago discovery efectivo en conversaciones estándar y obtengo información útil.",
+ "Profundizo con repreguntas incluso cuando el prospecto es evasivo, con resultados repetibles.",
+ "Mi discovery es ejemplo para otros; llego al problema de fondo en cualquier escenario y lo enseño."],
+ evid:["Un manager o par escuchó una llamada real de discovery en los últimos 90 días y la puntuó","Tengo llamadas grabadas pero sin revisión","Es percepción propia"]},
+
+{id:6,cat:2,texto:"Calificación con marco (BANT, MEDDIC)",metodo:"RES",req:{SDR:3,BDR:2,AE:4},
+ niveles:["No uso ningún marco de calificación; avanzo con todo lo que llega.",
+ "Conozco el marco pero lo aplico de memoria, sin adaptarlo a la conversación real.",
+ "Califico oportunidades estándar usando el marco de forma correcta.",
+ "Aplico el marco incluso en casos ambiguos y mis oportunidades se sostienen (bajo % de rebote del AE).",
+ "Mis oportunidades son aceptadas por el AE de forma consistente y enseño a calificar con criterio propio."],
+ evid:["Tengo el dato real de % de oportunidades aceptadas sin devolver en los últimos 90 días","Lo sé aproximadamente, sin medirlo formalmente","Es percepción propia, sin dato"]},
+
+{id:7,cat:2,texto:"Escucha activa y registro de la conversación",metodo:"OBS+ART",req:{SDR:3,BDR:2,AE:4},
+ niveles:["No registro lo que dice el prospecto más allá de datos básicos de contacto.",
+ "Registro lo que dice, pero se me escapan matices o cosas dichas entre líneas.",
+ "Escucho y registro correctamente en conversaciones estándar y claras.",
+ "Capto y registro matices y contradicciones incluso en conversaciones confusas, con resultados repetibles.",
+ "Mi registro es tan completo que otro puede retomar la cuenta sin hablar conmigo, y lo enseño."],
+ evid:["Alguien escuchó una llamada real y comparó con mi registro en los últimos 90 días","Tengo el registro pero sin comparación con la llamada","Es percepción propia, sin verificación"]},
+
+{id:8,cat:2,texto:"Conocimiento de producto e industria",metodo:"SIM",req:{SDR:2,BDR:2,AE:4},
+ niveles:["Manejo solo lo básico del producto; no puedo hablar de la industria del cliente.",
+ "Explico el producto con un guion; fuera de él no sé responder.",
+ "Respondo preguntas estándar de producto e industria sin apoyo de guion.",
+ "Respondo preguntas complejas o poco frecuentes de forma repetible, incluso sin preparación previa.",
+ "Respondo cualquier pregunta en tiempo real, incluidas las inesperadas, y formo a otros."],
+ evid:["Hice un role-play con escenario sorpresa grabado en los últimos 90 días y me evaluaron","Hice simulaciones con guion conocido de antemano","Es percepción propia, sin simulación evaluada"]},
+
+{id:9,cat:3,texto:"Articulación de valor / pitch",metodo:"SIM",req:{SDR:2,BDR:3,AE:4},
+ niveles:["No tengo un pitch propio; repito literalmente lo que me dieron.",
+ "Doy el pitch tal como me lo enseñaron; si me interrumpen, pierdo el hilo.",
+ "Adapto el pitch a variaciones estándar sin perder el mensaje central.",
+ "Adapto el pitch en tiempo real ante preguntas inesperadas, con resultados repetibles.",
+ "Mi forma de articular valor es modelo para el equipo; improviso en cualquier escenario y lo enseño."],
+ evid:["Hice un role-play con escenario sorpresa grabado en los últimos 90 días","Practiqué con guion conocido, sin sorpresa","Es percepción propia, sin práctica evaluada"]},
+
+{id:10,cat:3,texto:"Manejo de objeciones",metodo:"SIM+OBS",req:{SDR:2,BDR:3,AE:4},
+ niveles:["Ante una objeción, no sé qué responder o me quedo en blanco.",
+ "Manejo las objeciones que tengo memorizadas de una lista; una distinta me descoloca.",
+ "Manejo objeciones habituales (precio, timing, ya tenemos algo) sin apoyo.",
+ "Manejo objeciones nuevas o combinadas de forma efectiva y repetible.",
+ "Convierto objeciones difíciles en oportunidades de avance de forma consistente, y lo entreno en otros."],
+ evid:["Un manager o par vio cómo manejé una objeción real o en un role-play sorpresa en los últimos 90 días","Tengo casos que salieron bien pero nadie los vio ni evaluó","Es percepción propia, sin evidencia observada"]},
+
+{id:11,cat:3,texto:"Presentación y demo",metodo:"OBS",req:{SDR:1,BDR:1,AE:4},
+ niveles:["No doy presentaciones ni demos.",
+ "Doy una demo siguiendo un guion fijo de principio a fin; si me piden desviarme, no sé cómo seguir.",
+ "Adapto la demo a pedidos estándar del prospecto (saltar secciones, enfocar un módulo).",
+ "Improviso la demo en tiempo real según lo que le importa a cada prospecto, con imprevistos incluidos.",
+ "Mis demos son referencia para el equipo; presento ante audiencias exigentes (comités, C-level) y lo enseño."],
+ evid:["Un manager o par vio una demo real mía en los últimos 90 días y la evaluó","Di demos pero nadie las evaluó","Es percepción propia, sin evaluación externa"]},
+
+{id:12,cat:3,texto:"Negociación comercial",metodo:"OBS+RES",req:{SDR:0,BDR:1,AE:4},
+ niveles:["No participo de negociaciones comerciales; no es parte de mi rol.",
+ "Estuve presente en negociaciones pero seguí lo que otro decidió, sin negociar yo directamente.",
+ "Negocio condiciones estándar (descuentos predefinidos, plazos habituales) dentro de márgenes ya establecidos.",
+ "Negocio condiciones no estándar y cierro con resultados repetibles.",
+ "Negocio acuerdos complejos de forma autónoma, con resultado medible, y lo enseño."],
+ evid:["Un manager vio una negociación real y hay resultado medible en los últimos 90 días","Negocié pero sin que nadie lo viera ni midiera el resultado","Percepción propia, nunca negocié en los hechos"]},
+
+{id:13,cat:4,texto:"Higiene de CRM y trazabilidad",metodo:"ART",req:{SDR:3,BDR:3,AE:3},
+ niveles:["No cargo información en el CRM más allá de lo obligatorio del sistema.",
+ "Cargo el CRM cuando alguien me lo pide o audita; no es un hábito propio.",
+ "Mantengo el CRM actualizado en cuentas activas y de rutina.",
+ "Cualquier colega puede retomar cualquiera de mis cuentas mañana sin hablar conmigo, de forma sostenida.",
+ "Mi forma de documentar es tomada como estándar del equipo y ayudo a otros a mejorar su higiene de CRM."],
+ evid:["Alguien auditó registros míos sin avisar en los últimos 90 días y pudo reconstruir la cuenta","Mi CRM está cargado pero nadie lo auditó","Percepción propia, sin registro auditado"]},
+
+{id:14,cat:4,texto:"Gestión del pipeline propio",metodo:"RES",req:{SDR:2,BDR:3,AE:4},
+ niveles:["No gestiono mi propio pipeline; otro me dice en qué enfocarme cada día.",
+ "Reviso mi pipeline cuando me lo piden, no como rutina propia.",
+ "Reviso y priorizo mi pipeline de forma regular en situaciones estándar.",
+ "Priorizo mi pipeline incluso con señales contradictorias o cuentas atascadas, con resultados repetibles.",
+ "Mi gestión de pipeline es modelo para el equipo, con métricas sostenidas por encima del promedio."],
+ evid:["Tengo métricas reales de mi pipeline (velocidad, conversión por etapa) de los últimos 90 días","Tengo una idea aproximada, sin métrica formal","Percepción propia, sin métrica"]},
+
+{id:15,cat:4,texto:"Forecast y lectura de riesgo",metodo:"RES",req:{SDR:1,BDR:1,AE:4},
+ niveles:["No hago forecast ni evalúo riesgo de mis oportunidades.",
+ "Reporto un forecast basado en lo que siento, más que en señales concretas.",
+ "Identifico riesgos evidentes en oportunidades estándar (sin presupuesto claro, sin fecha).",
+ "Mi forecast identifica riesgos no evidentes y se sostiene en el tiempo con precisión repetible.",
+ "Mi precisión de forecast contra resultado real es consistentemente alta, trimestre a trimestre."],
+ evid:["Tengo el dato real de precisión de mi forecast vs. resultado de al menos un trimestre","Hago forecast pero nunca lo comparé con el resultado real","Percepción propia, sin dato de precisión"]},
+
+{id:16,cat:4,texto:"Gestión del tiempo y priorización",metodo:"RES",req:{SDR:3,BDR:3,AE:3},
+ niveles:["No priorizo mi tiempo; reacciono a lo que llega en el momento.",
+ "Sigo una agenda o rutina que otro armó; sin eso no sé priorizar mi día.",
+ "Priorizo mi tiempo de forma efectiva en semanas estándar, sin imprevistos grandes.",
+ "Priorizo bien incluso en semanas con imprevistos o carga inusual, sosteniendo resultados en el tiempo.",
+ "Mi forma de organizar el tiempo es referencia para otros y la puedo enseñar de forma estructurada."],
+ evid:["Tengo evidencia medible (cumplimiento de actividades clave, cuota) de los últimos 90 días","Creo que priorizo bien pero no tengo métrica","Percepción propia, sin dato"]},
+
+{id:17,cat:4,texto:"Uso de IA y herramientas del stack",metodo:"ART",req:{SDR:3,BDR:3,AE:3},
+ niveles:["No uso las herramientas de IA/stack disponibles, o solo si alguien me obliga.",
+ "Uso las herramientas siguiendo instrucciones fijas; no las adapto a mi forma de trabajar.",
+ "Uso el stack de forma efectiva para tareas estándar (research, redacción de mails).",
+ "Uso IA o herramientas para mejorar mi desarrollo (ej. analizar mis propias llamadas), no solo para generar contenido.",
+ "Encuentro y adapto nuevos usos que el equipo termina adoptando, y enseño a otros a usarlos bien."],
+ evid:["Puedo mostrar un caso concreto (análisis de llamada propia, output revisado) de los últimos 90 días","Uso las herramientas pero sin caso concreto para mostrar","Percepción propia, sin artefacto"]},
+
+{id:18,cat:5,texto:"Resiliencia ante el rechazo",metodo:"TER",req:{SDR:2,BDR:4,AE:3},
+ niveles:["El rechazo me afecta al punto de evitar la actividad que lo generó.",
+ "Sigo trabajando después de un rechazo, pero necesito que alguien me contenga o motive.",
+ "Me recupero solo de rechazos habituales en un día normal de trabajo.",
+ "Sostengo mi nivel de actividad incluso después de rachas largas de rechazo, con resultados repetibles.",
+ "Mi manager o mis pares me señalan como referencia de resiliencia; ayudo a sostener a otros."],
+ evid:["Un manager o par puede confirmar esto por lo que observó en los últimos 90 días","Nadie lo mencionó espontáneamente, pero lo confirmaría si se le pregunta","Percepción propia, nadie más lo notó"]},
+
+{id:19,cat:5,texto:"Coachability",metodo:"TER",req:{SDR:4,BDR:4,AE:3},
+ niveles:["Rechazo el feedback o lo tomo como ataque personal.",
+ "Acepto el feedback pero rara vez cambio algo concreto a partir de él.",
+ "Incorporo correcciones puntuales cuando me las repiten varias veces.",
+ "Incorporo una corrección específica en las dos semanas siguientes de recibirla, de forma sostenida.",
+ "Busco feedback de forma proactiva y mi velocidad de incorporarlo es señalada por mi manager como ejemplo."],
+ evid:["Mi manager o un par puede dar un ejemplo concreto de una corrección incorporada en las últimas 2 semanas","Creo que incorporo feedback pero nadie lo señaló espontáneamente","Percepción propia, sin confirmación de terceros"]},
+
+{id:20,cat:5,texto:"Traspaso y colaboración",metodo:"TER",req:{SDR:3,BDR:3,AE:3},
+ niveles:["No colaboro ni traspaso información a otros roles.",
+ "Hago el traspaso solo cuando me lo piden explícitamente, con lo mínimo indispensable.",
+ "Hago traspasos completos en situaciones estándar sin que me lo pidan.",
+ "Mis traspasos son completos y útiles incluso en cuentas complejas o urgentes, de forma sostenida.",
+ "Otros roles piden específicamente trabajar conmigo por la calidad de mi traspaso."],
+ evid:["El AE, manager o par receptor puede confirmarlo por experiencia reciente (90 días)","Creo que mis traspasos son buenos pero nadie lo confirmó","Percepción propia, sin confirmación"]},
+
+{id:21,cat:5,texto:"Red interna y marca personal",metodo:"ART+TER",req:{SDR:2,BDR:3,AE:3},
+ niveles:["No tengo actividad de red interna ni de marca personal.",
+ "Participo si me invitan, pero no genero nada por mi cuenta.",
+ "Genero visibilidad de forma ocasional, sin que sea algo sostenido.",
+ "Sostengo presencia y red de forma regular (interna y/o externa) en el tiempo.",
+ "Soy reconocido como referente en mi tema; otros buscan mi red o mi contenido activamente."],
+ evid:["Tengo actividad real de los últimos 90 días y alguien confirma que generó valor","Tengo actividad pero nadie confirmó su efecto","Percepción propia, sin confirmación externa"],
+ nota:"Esta es la única de las 21 competencias que no le sirve al empleador — te sirve a vos."}
+];
+
+/* ============ STATE ============ */
+const state = { screen:'intro', rolActual:null, i:0, answers:{}, email:'', honeypot:'', captureStatus:'idle' };
+Q.forEach(q=> state.answers[q.id] = {nivel:null, ev:null});
+
+function start(rol){ state.rolActual = rol; state.screen='quiz'; state.i=0; render(); }
+function selectNivel(qid, idx){
+  state.answers[qid].nivel = idx;
+  if(idx < 3) state.answers[qid].ev = null;
+  render();
+}
+function selectEv(qid, idx){ state.answers[qid].ev = idx; render(); }
+function canAdvance(qid){
+  const a = state.answers[qid];
+  if(a.nivel===null) return false;
+  if(a.nivel>=3 && a.ev===null) return false;
+  return true;
+}
+function next(){ if(state.i < Q.length-1){ state.i++; render(); } else { state.screen='results'; render(); } }
+function prev(){ if(state.i>0){ state.i--; render(); } }
+function restart(){
+  state.screen='intro'; state.rolActual=null; state.i=0; state.email=''; state.captureStatus='idle';
+  Q.forEach(q=> state.answers[q.id]={nivel:null,ev:null});
+  render();
+}
+function rolObjetivo(){ return state.rolActual==='SDR' ? 'BDR' : 'AE'; }
+
+function computeResults(){
+  const objetivo = rolObjetivo();
+  const actual = state.rolActual;
+  let rows = [], maxPrioridad=0, sumPrioridad=0, blindOpen=0;
+  let catSum={1:0,2:0,3:0,4:0,5:0}, catCount={1:0,2:0,3:0,4:0,5:0};
+  let highTotal=0, highWithEvidence=0;
+
+  Q.forEach(q=>{
+    const nivel = state.answers[q.id].nivel;
+    const reqObj = q.req[objetivo];
+    const reqAct = q.req[actual];
+    const brecha = Math.max(0, reqObj - nivel);
+    const peso = reqObj===4?3:(reqObj===3?2:1);
+    const prioridad = brecha*peso;
+    const blind = reqAct<=1 && reqObj===4;
+    if(blind && brecha>0) blindOpen++;
+    maxPrioridad += reqObj*peso;
+    sumPrioridad += prioridad;
+    catSum[q.cat]+=nivel; catCount[q.cat]++;
+    if(nivel>=3){ highTotal++; if(state.answers[q.id].ev!==2) highWithEvidence++; }
+    rows.push({q,nivel,reqObj,reqAct,brecha,peso,prioridad,blind});
+  });
+
+  const ratio = maxPrioridad>0 ? sumPrioridad/maxPrioridad : 0;
+  let band;
+  if(blindOpen>=2) band=1;
+  else if(ratio>0.65) band=1;
+  else if(blindOpen===1) band=2;
+  else if(ratio>0.35) band=2;
+  else if(ratio>0.15) band=3;
+  else band=4;
+
+  const bandInfo = {
+    1:{label:"Recién arrancando el camino", text:"Tu perfil actual está lejos de lo que pide el rol objetivo, con brechas grandes y/o más de una brecha ciega sin cerrar. Es un buen momento para construir base antes de apuntar a la transición."},
+    2:{label:"En desarrollo activo", text:"Estás trabajando hacia el rol objetivo, pero todavía hay brechas relevantes —incluida al menos una brecha ciega, si aplica— que necesitan foco deliberado."},
+    3:{label:"Cerca del salto", text:"Tu perfil se acerca a lo que pide el rol objetivo. No quedan brechas ciegas abiertas y las brechas restantes son manejables con foco en las prioritarias."},
+    4:{label:"Listo para el salto", text:"Tu perfil demostrado ya cubre casi todo lo que pide el rol objetivo, sin brechas ciegas pendientes. Vale la pena buscar la conversación de transición."}
+  };
+
+  const catPuntaje = {};
+  for(let c=1;c<=5;c++) catPuntaje[c] = catSum[c]/catCount[c];
+  const totalPuntaje = rows.reduce((s,r)=>s+r.nivel,0)/rows.length;
+
+  const blindRows = rows.filter(r=>r.blind && r.brecha>0);
+  const top3 = rows.filter(r=>r.prioridad>0)
+    .sort((a,b)=> (b.blind - a.blind) || (b.prioridad - a.prioridad) || (a.q.cat - b.q.cat))
+    .slice(0,3);
+
+  const evidencePct = highTotal>0 ? Math.round(100*highWithEvidence/highTotal) : null;
+
+  return {objetivo, actual, band, bandInfo:bandInfo[band], catPuntaje, totalPuntaje, blindRows, top3, evidencePct, highTotal, rows};
+}
+
+/* ============ CAPTURE (n8n webhook) ============ */
+function isValidEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+async function submitCapture(ev){
+  ev.preventDefault();
+  const emailInput = document.getElementById('cap-email');
+  const hpInput = document.getElementById('cap-hp');
+  const email = emailInput.value.trim();
+  if(hpInput.value){ return; } // honeypot: bots fill hidden fields, humans don't
+  if(!isValidEmail(email)){
+    state.captureStatus = 'error'; state.captureMsg = 'Ingresá un email válido.'; render(); return;
+  }
+  state.email = email;
+  state.captureStatus = 'sending'; render();
+
+  const r = computeResults();
+  const payload = {
+    email: state.email,
+    timestamp: new Date().toISOString(),
+    rol_actual: r.actual,
+    rol_objetivo: r.objetivo,
+    banda: { nivel: r.band, label: r.bandInfo.label },
+    puntaje_total: Number(r.totalPuntaje.toFixed(2)),
+    puntaje_por_categoria: Object.fromEntries(Object.entries(r.catPuntaje).map(([c,v])=>[CATS[c], Number(v.toFixed(2))])),
+    brechas_ciegas: r.blindRows.map(row=>row.q.texto),
+    top3_prioridades: r.top3.map(row=>({competencia:row.q.texto, categoria:CATS[row.q.cat], brecha:row.brecha, metodo:row.q.metodo})),
+    respuestas_detalle: r.rows.map(row=>({competencia:row.q.texto, nivel:row.nivel, evidencia_index: state.answers[row.q.id].ev}))
+  };
+
+  try{
+    const res = await fetch(WEBHOOK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('bad status');
+    state.captureStatus = 'sent';
+  }catch(err){
+    state.captureStatus = 'error';
+    state.captureMsg = 'No pudimos enviarlo. Probá de nuevo en un momento.';
+  }
+  render();
+}
+
+/* ============ RENDER ============ */
+function render(){
+  const app = document.getElementById('app');
+  if(state.screen==='intro'){
+    app.innerHTML = `
+    <div class="intro">
+      <div class="eyebrow">Autodiagnóstico · Framework de competencias SDR / BDR / AE</div>
+      <h1>Mapa de brechas hacia tu próximo rol</h1>
+      <p>21 preguntas de opción fija, una por competencia. Cada respuesta describe una conducta concreta, no un puntaje. Al final vas a ver tu banda de cercanía al próximo rol, tus brechas ciegas y las tres competencias en las que más te conviene enfocarte.</p>
+      <div class="disclaimer"><strong>Esto es autodiagnóstico, no evaluación.</strong> No sirve para procesos de selección, evaluación de desempeño, ni para comparar personas. Sirve para responder una sola pregunta: si querés llegar al próximo rol, ¿qué te falta y en qué orden lo conseguís?</div>
+      <div class="role-grid">
+        <button class="role-card" onclick="start('SDR')">
+          <div class="tag">SI HOY SOS</div>
+          <div class="name">SDR</div>
+          <div class="arrow">→ tu próximo rol: BDR</div>
+        </button>
+        <button class="role-card" onclick="start('BDR')">
+          <div class="tag">SI HOY SOS</div>
+          <div class="name">BDR</div>
+          <div class="arrow">→ tu próximo rol: AE</div>
+        </button>
+      </div>
+      <div class="credit">Un diagnóstico de Reunión de Forecast</div>
+    </div>`;
+    return;
+  }
+
+  if(state.screen==='quiz'){
+    const q = Q[state.i];
+    const a = state.answers[q.id];
+    const pct = Math.round(100*state.i/Q.length);
+    let railHtml = '';
+    for(let c=1;c<=5;c++){
+      const qsInCat = Q.filter(x=>x.cat===c);
+      const answeredInCat = qsInCat.filter(x=>canAdvance(x.id)).length;
+      const isActive = q.cat===c;
+      const isDone = answeredInCat===qsInCat.length;
+      railHtml += `<div class="stage ${isActive?'active':''} ${isDone?'done':''}">
+        <span class="stage-dot"></span><span class="stage-name">${CATS[c]}</span>
+        <div class="stage-count">${answeredInCat}/${qsInCat.length}</div>
+      </div>`;
+    }
+    let optsHtml = q.niveles.map((txt,idx)=>`<button class="opt ${a.nivel===idx?'sel':''}" onclick="selectNivel(${q.id},${idx})">${txt}</button>`).join('');
+    let evidenceHtml = '';
+    if(a.nivel!==null && a.nivel>=3){
+      evidenceHtml = `<div class="evidence">
+        <div class="evidence-label">¿Qué evidencia respalda este puntaje?</div>
+        ${q.evid.map((txt,idx)=>`<button class="opt ${a.ev===idx?'sel':''}" onclick="selectEv(${q.id},${idx})">${txt}</button>`).join('')}
+      </div>`;
+    }
+    const noteHtml = q.nota ? `<div class="note">${q.nota}</div>` : '';
+    app.innerHTML = `
+    <div class="shell">
+      <div class="topbar">
+        <div class="barline"><div class="barfill" style="width:${pct}%"></div></div>
+        <div class="topmeta"><span>Pregunta ${state.i+1} de ${Q.length}</span><span>Rol actual: ${state.rolActual} · Objetivo: ${rolObjetivo()}</span></div>
+      </div>
+      <div class="rail">${railHtml}</div>
+      <div>
+        <div class="qcard">
+          <div class="qmeta">${CATS[q.cat]}</div>
+          <div class="qtext">${q.texto}</div>
+          <div class="options">${optsHtml}</div>
+          ${evidenceHtml}
+          ${noteHtml}
+        </div>
+        <div class="navrow">
+          <button class="btn" onclick="prev()" ${state.i===0?'disabled':''}>Anterior</button>
+          <button class="btn primary" onclick="next()" ${canAdvance(q.id)?'':'disabled'}>${state.i===Q.length-1?'Ver resultado':'Siguiente'}</button>
+        </div>
+      </div>
+    </div>`;
+    return;
+  }
+
+  if(state.screen==='results'){
+    const r = computeResults();
+    const catBars = [1,2,3,4,5].map(c=>{
+      const v = r.catPuntaje[c];
+      return `<div class="catrow">
+        <span class="label">${CATS[c]}</span><span class="catval">${v.toFixed(1)} / 4</span>
+        <div class="catbar"><i style="width:${(v/4*100).toFixed(0)}%"></i></div>
+      </div>`;
+    }).join('');
+
+    let blindHtml;
+    if(r.blindRows.length>0){
+      blindHtml = r.blindRows.map(row=>`
+        <div class="blind-card">
+          <div class="name">${row.q.texto}</div>
+          <div class="why">Tu rol actual (${r.actual}) pide nivel ${row.reqAct} acá; el rol objetivo (${r.objetivo}) pide nivel 4. No se cierra sola con el trabajo diario — hay que buscarla a propósito.</div>
+        </div>`).join('');
+    } else {
+      blindHtml = `<div class="neutral-note">No se detectaron brechas ciegas en esta transición (${r.actual} → ${r.objetivo}).</div>`;
+    }
+
+    const top3Html = r.top3.length>0 ? r.top3.map((row,idx)=>`
+      <div class="pri-card">
+        <div class="rank">PRIORIDAD ${idx+1}${row.blind?' · BRECHA CIEGA':''}</div>
+        <div class="name">${row.q.texto}</div>
+        <div class="cat">${CATS[row.q.cat]} · brecha de ${row.brecha} nivel${row.brecha>1?'es':''}</div>
+        <div class="action"><b>Cómo verificarlo:</b> ${accionPara(row.q.metodo)}</div>
+      </div>`).join('') : `<div class="neutral-note">No hay brechas priorizables: tu nivel actual ya cubre lo que pide ${r.objetivo} en las 21 competencias.</div>`;
+
+    const warnHtml = (r.evidencePct!==null && r.evidencePct<50) ? `<div class="warn">De tus respuestas en nivel 3 o 4, solo el ${r.evidencePct}% tiene evidencia externa real. Tratá los puntajes sin evidencia como intuición, no como diagnóstico, hasta conseguir esa evidencia.</div>` : '';
+
+    let captureHtml;
+    if(state.captureStatus==='sent'){
+      captureHtml = `<div class="capture"><h2>¡Listo!</h2><p class="capture-msg ok">Te lo enviamos a ${state.email}. Revisá tu casilla en unos minutos (y la carpeta de spam, por las dudas).</p></div>`;
+    } else {
+      captureHtml = `<div class="capture">
+        <h2>¿Querés recibir este resultado por mail?</h2>
+        <p>También podemos usarlo para contactarte con recursos puntuales para tu próximo paso. Nunca lo compartimos con terceros.</p>
+        <form onsubmit="submitCapture(event)">
+          <div class="capture-row">
+            <input id="cap-email" type="email" placeholder="tu@email.com" required>
+            <input id="cap-hp" class="hp" tabindex="-1" autocomplete="off" name="empresa_web">
+            <button class="btn primary" type="submit" ${state.captureStatus==='sending'?'disabled':''}>${state.captureStatus==='sending'?'Enviando…':'Enviarme el resultado'}</button>
+          </div>
+        </form>
+        ${state.captureStatus==='error' ? `<div class="capture-msg err">${state.captureMsg}</div>` : ''}
+      </div>`;
+    }
+
+    app.innerHTML = `
+    <div class="res-head">
+      <div class="res-path">${r.actual}<span class="arrow">→</span>${r.objetivo}</div>
+      <span class="band-chip band-${r.band}">${r.bandInfo.label}</span>
+      <div class="band-text">${r.bandInfo.text}</div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <h2>Puntaje por categoría</h2>
+        ${catBars}
+        <div class="total-row"><span>Puntaje total</span><span class="big mono">${r.totalPuntaje.toFixed(1)} / 4</span></div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:20px;">
+          <h2>Brechas ciegas</h2>
+          ${blindHtml}
+        </div>
+        <div class="panel">
+          <h2>Tus tres prioridades</h2>
+          ${top3Html}
+          ${warnHtml}
+        </div>
+      </div>
+    </div>
+    ${captureHtml}
+    <div class="footer-disc">Recordá: este resultado es autodiagnóstico. No compara tu perfil con el de otras personas y no debería usarse en procesos de selección ni de evaluación de desempeño.</div>
+    <button class="btn restart" onclick="restart()">Volver a empezar</button>
+    <div class="credit">Un diagnóstico de Reunión de Forecast</div>
+    `;
+    return;
+  }
+}
+
+render();
+</script>
+</body>
+</html>
