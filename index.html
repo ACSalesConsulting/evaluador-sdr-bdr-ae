@@ -415,11 +415,25 @@ function computeResults(){
   else band=4;
 
   const bandInfo = {
-    1:{label:"Recién arrancando el camino", text:"Tu perfil actual está lejos de lo que pide el rol objetivo, con brechas grandes y/o más de una brecha ciega sin cerrar. Es un buen momento para construir base antes de apuntar a la transición."},
+    1:{label:"Recién arrancando el camino", text:"Tu perfil actual está lejos de lo que pide el rol objetivo, con brechas grandes en varias competencias. Es un buen momento para construir base antes de apuntar a la transición."},
     2:{label:"En desarrollo activo", text:"Estás trabajando hacia el rol objetivo, pero todavía hay brechas relevantes —incluida al menos una brecha ciega, si aplica— que necesitan foco deliberado."},
     3:{label:"Cerca del salto", text:"Tu perfil se acerca a lo que pide el rol objetivo. No quedan brechas ciegas abiertas y las brechas restantes son manejables con foco en las prioritarias."},
     4:{label:"Listo para el salto", text:"Tu perfil demostrado ya cubre casi todo lo que pide el rol objetivo, sin brechas ciegas pendientes. Vale la pena buscar la conversación de transición."}
   };
+  // Banda 1 tiene dos causas muy distintas: nivel general bajo en todo, o un perfil sólido
+  // bloqueado solo por brechas ciegas (blindOpen>=2). Para distinguirlas, medimos el ratio
+  // de brecha SIN contar las competencias ciegas — si ese ratio ya sería banda 2 o mejor,
+  // el problema real es puntual, no general, y el texto tiene que decir eso.
+  let nonBlindSum=0, nonBlindMax=0;
+  rows.forEach(r=>{ if(!r.blind){ nonBlindSum+=r.prioridad; nonBlindMax+=r.reqObj*r.peso; } });
+  const nonBlindRatio = nonBlindMax>0 ? nonBlindSum/nonBlindMax : 0;
+
+  if(band===1 && blindOpen>=2 && nonBlindRatio<=0.35){
+    bandInfo[1] = {
+      label:"Recién arrancando el camino",
+      text:`Tu nivel general no es el problema —mirá los puntajes por categoría—, pero hay ${blindOpen} competencias que tu rol actual (${actual}) nunca te exige practicar, así que quedan sin demostrar. Cerrarlas a propósito es lo único que te separa del salto a ${objetivo}.`
+    };
+  }
 
   const catPuntaje = {};
   for(let c=1;c<=5;c++) catPuntaje[c] = catSum[c]/catCount[c];
