@@ -401,7 +401,7 @@ function computeResults(){
     maxPrioridad += reqObj*peso;
     sumPrioridad += prioridad;
     catSum[q.cat]+=nivel; catCount[q.cat]++;
-    if(nivel>=3){ highTotal++; if(state.answers[q.id].ev!==2) highWithEvidence++; }
+    if(nivel>=3){ highTotal++; if(state.answers[q.id].ev===0) highWithEvidence++; }
     rows.push({q,nivel,reqObj,reqAct,brecha,peso,prioridad,blind});
   });
 
