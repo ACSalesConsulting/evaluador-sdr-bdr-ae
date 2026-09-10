@@ -113,7 +113,8 @@
   .band-text{flex-basis:100%;font-size:14.5px;line-height:1.55;color:var(--muted);margin-top:2px;}
 
   .grid2{display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start;}
-  @media (max-width:760px){.grid2{grid-template-columns:1fr;}}
+  .grid2 > .panel{position:sticky;top:20px;}
+  @media (max-width:760px){.grid2{grid-template-columns:1fr;} .grid2 > .panel{position:static;}}
 
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;}
   .panel h2{font-size:17px;font-weight:600;margin-bottom:16px;}
