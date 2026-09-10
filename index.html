@@ -437,6 +437,7 @@ function computeResults(){
 
 /* ============ CAPTURE (n8n webhook) ============ */
 function isValidEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function escapeHtml(v){ return String(v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 async function submitCapture(ev){
   ev.preventDefault();
@@ -587,7 +588,7 @@ function render(){
 
     let captureHtml;
     if(state.captureStatus==='sent'){
-      captureHtml = `<div class="capture"><h2>¡Listo!</h2><p class="capture-msg ok">Te lo enviamos a ${state.email}. Revisá tu casilla en unos minutos (y la carpeta de spam, por las dudas).</p></div>`;
+      captureHtml = `<div class="capture"><h2>¡Listo!</h2><p class="capture-msg ok">Te lo enviamos a ${escapeHtml(state.email)}. Revisá tu casilla en unos minutos (y la carpeta de spam, por las dudas).</p></div>`;
     } else {
       captureHtml = `<div class="capture">
         <h2>¿Querés recibir este resultado por mail?</h2>
