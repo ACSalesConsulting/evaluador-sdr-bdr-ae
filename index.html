@@ -202,7 +202,7 @@ const CATS = {
 };
 
 const METODO_ACCION = {
-  OBS:"Pedile a tu manager o a un par que escuche o vea una interacción real tuya reciente y te dé feedback puntuado",
+  OBS:"Pedile a tu manager o a un par que escuche o vea una interacción real tuya reciente y te dé feedback puntual",
   ART:"Compartí un artefacto real tuyo (mail, nota de CRM, lista de cuentas, propuesta) para que alguien lo revise con vos",
   RES:"Sacá el dato real (conversión, % de oportunidades aceptadas, precisión de forecast) de tu CRM o reporte de los últimos 90 días",
   SIM:"Pedí un role-play con escenario sorpresa grabado, y que alguien te dé feedback",
@@ -558,7 +558,7 @@ async function submitCapture(ev){
     puntaje_por_categoria: Object.fromEntries(Object.entries(r.catPuntaje).map(([c,v])=>[CATS[c], Number(v.toFixed(2))])),
     brechas_ciegas: r.blindRows.map(row=>({
       competencia: row.q.texto,
-      porque: `Esto es lo que se espera en ${r.objetivo}: "${row.q.niveles[row.reqObj]}" No se cierra solo con el trabajo diario — hay que buscarlo a propósito.`,
+      porque: `Esto es lo que se espera de un ${r.objetivo}: "${row.q.niveles[row.reqObj]}" No se cierra solo con el trabajo diario — hay que buscarlo a propósito.`,
       accion: accionPara(row.q.metodo)
     })),
     top3_prioridades: r.top3.map(row=>({competencia:row.q.texto, categoria:CATS[row.q.cat], objetivo_texto:row.q.niveles[row.reqObj], accion:accionPara(row.q.metodo)})),
@@ -742,7 +742,7 @@ function render(){
       blindHtml = r.blindRows.map(row=>`
         <div class="blind-card">
           <div class="name">${row.q.texto}</div>
-          <div class="why">Esto es lo que se espera en ${r.objetivo}: "${row.q.niveles[row.reqObj]}" No se cierra solo con el trabajo diario — hay que buscarlo a propósito.</div>
+          <div class="why">Esto es lo que se espera de un ${r.objetivo}: "${row.q.niveles[row.reqObj]}" No se cierra solo con el trabajo diario — hay que buscarlo a propósito.</div>
           <div class="action"><b>Cómo verificarlo:</b> ${accionPara(row.q.metodo)}</div>
         </div>`).join('');
     } else {
@@ -754,7 +754,7 @@ function render(){
         <div class="rank">PRIORIDAD ${idx+1}${row.blind?' · PUNTO CIEGO':''}</div>
         <div class="name">${row.q.texto}</div>
         <div class="cat">${CATS[row.q.cat]}</div>
-        <div class="target">Lo que se espera en ${r.objetivo}: "${row.q.niveles[row.reqObj]}"</div>
+        <div class="target">Lo que se espera de un ${r.objetivo}: "${row.q.niveles[row.reqObj]}"</div>
         <div class="action"><b>Cómo verificarlo:</b> ${accionPara(row.q.metodo)}</div>
       </div>`).join('') : `<div class="neutral-note">No hay brechas priorizables: tu nivel actual ya cubre lo que pide ${r.objetivo} en las 21 competencias.</div>`;
 
