@@ -62,6 +62,20 @@
   .role-card .name{font-family:var(--font-display);font-size:26px;font-weight:600;margin:4px 0 8px;}
   .role-card .arrow{font-size:14px;color:var(--accent);font-weight:500;}
 
+  /* ---------- Portada legal ---------- */
+  .legal-short{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px 24px;margin:20px 0;}
+  .legal-short p{font-size:15px;line-height:1.65;color:var(--ink);margin:0 0 14px;}
+  .legal-short p:last-child{margin-bottom:0;}
+  .terms-toggle{display:block;width:100%;text-align:left;background:none;border:none;padding:10px 2px;font-size:13.5px;color:var(--accent);font-weight:500;}
+  .legal-full{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin:8px 0 18px;max-height:420px;overflow-y:auto;}
+  .legal-full h3{font-size:13px;letter-spacing:.04em;text-transform:uppercase;font-family:var(--font-mono);margin-bottom:14px;}
+  .legal-full p{font-size:13px;line-height:1.6;color:var(--muted);margin:0 0 12px;}
+  .legal-full p b{color:var(--ink);}
+  .legal-full ol.alpha{margin:0 0 12px;padding-left:20px;}
+  .legal-full ol.alpha li{font-size:13px;line-height:1.6;color:var(--muted);margin-bottom:4px;}
+  .check-row{display:flex;align-items:flex-start;gap:10px;margin:18px 0;cursor:pointer;font-size:14.5px;line-height:1.5;}
+  .check-row input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent);flex-shrink:0;}
+
   .shell{display:grid;grid-template-columns:220px 1fr;gap:32px;align-items:start;}
   @media (max-width:760px){.shell{grid-template-columns:1fr;}}
   .topbar{grid-column:1/-1;margin-bottom:8px;}
@@ -357,8 +371,12 @@ const Q = [
 ];
 
 /* ============ STATE ============ */
-const state = { screen:'intro', rolActual:null, i:0, answers:{}, email:'', honeypot:'', captureStatus:'idle' };
+const state = { screen:'disclaimer', rolActual:null, i:0, answers:{}, email:'', honeypot:'', captureStatus:'idle', termsExpanded:false, disclaimerChecked:false };
 Q.forEach(q=> state.answers[q.id] = {nivel:null, ev:null});
+
+function toggleTerms(){ state.termsExpanded = !state.termsExpanded; render(); }
+function toggleDisclaimerCheck(checked){ state.disclaimerChecked = checked; render(); }
+function acceptDisclaimer(){ if(state.disclaimerChecked){ state.screen='intro'; render(); } }
 
 function start(rol){ state.rolActual = rol; state.screen='quiz'; state.i=0; render(); }
 function selectNivel(qid, idx){
@@ -498,8 +516,65 @@ async function submitCapture(ev){
 }
 
 /* ============ RENDER ============ */
+const TERMINOS_COMPLETOS = `
+<h3>Términos y condiciones de uso</h3>
+<p><b>1. Naturaleza y finalidad.</b> La presente herramienta (en adelante, "la Herramienta") constituye material de carácter exclusivamente informativo y educativo. Su finalidad es ofrecer al usuario un marco de referencia para la autorreflexión sobre competencias profesionales en roles de desarrollo de ventas. La Herramienta no constituye ni sustituye asesoramiento profesional de ninguna naturaleza, incluyendo, de manera no taxativa, asesoramiento laboral, legal, de recursos humanos, de gestión de carrera, psicológico, de coaching o de orientación vocacional.</p>
+<p><b>2. Ausencia de relación profesional.</b> El acceso y uso de la Herramienta no genera relación profesional, contractual, laboral, de consultoría ni de asesoramiento alguna entre el usuario y el autor. El autor no asume deber de seguimiento, acompañamiento ni actualización respecto del usuario.</p>
+<p><b>3. Ausencia de personalización.</b> La Herramienta ha sido elaborada con criterios generales y no contempla las circunstancias particulares de cada usuario. En particular, no considera ni puede considerar:</p>
+<ol class="alpha">
+<li>la estructura organizacional, las políticas internas, los criterios de promoción o los procesos de evaluación de la empresa donde el usuario se desempeña;</li>
+<li>la relación del usuario con sus superiores, pares o equipos;</li>
+<li>el contexto de mercado, sector, región o momento económico;</li>
+<li>el historial laboral, la trayectoria, la formación o las condiciones personales del usuario;</li>
+<li>el marco normativo laboral aplicable a la relación de empleo del usuario.</li>
+</ol>
+<p>El usuario reconoce que los resultados que arroja la Herramienta se basan únicamente en los datos que él mismo ingresa y en criterios generales predefinidos.</p>
+<p><b>4. Ausencia de garantía de resultados.</b> El autor no garantiza, expresa ni tácitamente, que el uso de la Herramienta produzca resultado alguno, incluyendo de manera no taxativa la obtención de un ascenso, promoción, cambio de rol, incremento salarial, mejora de desempeño, contratación o cualquier otro beneficio profesional o económico. Toda referencia a niveles de competencia, brechas, prioridades o recomendaciones contenida en la Herramienta tiene carácter orientativo y no predictivo.</p>
+<p><b>5. Usos expresamente no previstos.</b> La Herramienta no ha sido diseñada, validada ni autorizada para ser utilizada como fundamento, prueba, sustento o justificación en:</p>
+<ol class="alpha">
+<li>solicitudes de promoción, ascenso o recategorización;</li>
+<li>decisiones de promoción, ascenso o recategorización respecto de terceros;</li>
+<li>procesos de evaluación de desempeño;</li>
+<li>procesos de selección, contratación o desvinculación de personal;</li>
+<li>reclamos, controversias, negociaciones o procedimientos de naturaleza laboral, administrativa o judicial;</li>
+<li>decisiones organizacionales de cualquier índole respecto de terceros.</li>
+</ol>
+<p>El usuario asume plena responsabilidad por cualquier uso de la Herramienta con los fines enunciados, los cuales quedan fuera del alcance previsto y de toda responsabilidad del autor.</p>
+<p><b>6. Base metodológica y sus límites.</b> El usuario reconoce haber sido informado de que: (a) no existe a la fecha un estándar validado científicamente de competencias para roles de ventas B2B; (b) la estructura de categorías, la escala de madurez, la asignación de niveles por rol y las fórmulas de ponderación contenidas en la Herramienta constituyen una construcción de criterio profesional del autor y no un hallazgo de investigación empírica; (c) los datos de industria citados como referencia provienen de estudios de terceros elaborados sobre muestras determinadas, y su extrapolación a contextos distintos es limitada; (d) los resultados de la Herramienta no han sido calibrados ni validados contra resultados reales de promoción o desempeño.</p>
+<p><b>7. Autoevaluación y sus sesgos.</b> La Herramienta opera sobre información autodeclarada por el usuario. El autor advierte expresamente que la autoevaluación de competencias difiere de manera sistemática de la evaluación realizada por terceros, y que los resultados obtenidos reflejan la percepción del usuario sobre sí mismo, no una medición objetiva de sus competencias.</p>
+<p><b>8. Responsabilidad del usuario.</b> El uso de la Herramienta es voluntario y se realiza bajo exclusiva decisión y responsabilidad del usuario. Toda interpretación de los resultados, así como toda decisión, acción u omisión que el usuario adopte a partir de ellos, es de su exclusiva incumbencia. Se recomienda al usuario contrastar cualquier conclusión derivada de la Herramienta con su superior directo, con el área de recursos humanos de su organización o con un profesional idóneo, antes de adoptar decisiones de carrera.</p>
+<p><b>9. Limitación de responsabilidad.</b> En la máxima medida permitida por la legislación aplicable, el autor no será responsable por daños directos, indirectos, incidentales, consecuentes, lucro cesante ni pérdida de chance derivados del uso o de la imposibilidad de uso de la Herramienta, o de las decisiones adoptadas sobre la base de sus resultados. La presente limitación no alcanza a los supuestos de dolo ni a aquellos que resulten indisponibles conforme a la normativa de orden público aplicable.</p>
+<p><b>10. Propiedad intelectual.</b> La Herramienta, su estructura, contenidos, metodología y textos son propiedad de su autor y se encuentran protegidos por la normativa de propiedad intelectual aplicable. Se autoriza su uso personal e individual. Queda prohibida su reproducción, distribución, comercialización, modificación o utilización con fines comerciales o de capacitación a terceros sin autorización previa y por escrito del autor.</p>
+<p><b>11. Modificaciones.</b> El autor podrá modificar la Herramienta y los presentes términos en cualquier momento. La versión aplicable será la vigente al momento del acceso.</p>
+<p><b>12. Legislación aplicable y jurisdicción.</b> Los presentes términos se rigen por las leyes de la República Argentina. Para toda controversia derivada de su interpretación o aplicación serán competentes los tribunales ordinarios de la Ciudad Autónoma de Buenos Aires, sin perjuicio de los fueros que resulten indisponibles conforme a la normativa de protección al consumidor.</p>
+<p><b>13. Aceptación.</b> El acceso y utilización de la Herramienta implica la aceptación plena y sin reservas de los presentes términos. Si el usuario no está de acuerdo con alguno de ellos, debe abstenerse de utilizarla.</p>
+`;
+
 function render(){
   const app = document.getElementById('app');
+  if(state.screen==='disclaimer'){
+    app.innerHTML = `
+    <div class="intro">
+      <div class="eyebrow">Antes de empezar</div>
+      <h1>Leé esto antes de completar el diagnóstico</h1>
+      <div class="legal-short">
+        <p>Esta herramienta es material educativo. No es asesoramiento profesional de ningún tipo y no conoce tu situación: no sabe en qué empresa trabajás, cómo es tu equipo, qué políticas de promoción existen ahí, ni qué está pasando en tu mercado.</p>
+        <p>No garantiza ningún resultado. Completarla no te acerca a un ascenso, a un puesto nuevo ni a un aumento.</p>
+        <p><strong>No la uses como fundamento para pedir una promoción, para justificar la promoción de otra persona, para evaluar el desempeño de alguien, ni en ningún proceso de selección, revisión o reclamo laboral.</strong> No fue diseñada para eso y no sirve para eso.</p>
+        <p>Los puntajes salen de tu propia percepción, y la percepción propia difiere sistemáticamente de la evaluación externa.</p>
+        <p>Las decisiones que tomes a partir de lo que leas acá son tuyas, y su consecuencia también.</p>
+      </div>
+      <button class="terms-toggle" onclick="toggleTerms()">${state.termsExpanded ? 'Ocultar términos y condiciones completos ▴' : 'Ver términos y condiciones completos ▾'}</button>
+      ${state.termsExpanded ? `<div class="legal-full">${TERMINOS_COMPLETOS}</div>` : ''}
+      <label class="check-row">
+        <input type="checkbox" ${state.disclaimerChecked ? 'checked' : ''} onchange="toggleDisclaimerCheck(this.checked)">
+        <span>Leí y entiendo lo anterior.</span>
+      </label>
+      <button class="btn primary" onclick="acceptDisclaimer()" ${state.disclaimerChecked ? '' : 'disabled'}>Continuar</button>
+    </div>`;
+    return;
+  }
+
   if(state.screen==='intro'){
     app.innerHTML = `
     <div class="intro">
