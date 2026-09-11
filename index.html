@@ -19,6 +19,7 @@
     --teal-soft:#DCEAE6;
     --rose:#A8402E;
     --rose-soft:#F3DEDA;
+    --accent-soft:#F1E4C8;
     --line:#D7D9D3;
     --muted:#5B6058;
     --font-display:'Fraunces', Georgia, 'Times New Roman', serif;
@@ -28,7 +29,7 @@
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --ink:#ECEEEA; --paper:#14171C; --surface:#1B1F25; --accent:#D9A857; --accent-ink:#171B21;
-      --teal:#5FB6A5; --teal-soft:#1D3A34; --rose:#E0806A; --rose-soft:#3B211D; --line:#2B2F35; --muted:#9AA098;
+      --teal:#5FB6A5; --teal-soft:#1D3A34; --rose:#E0806A; --rose-soft:#3B211D; --accent-soft:#3A2F1A; --line:#2B2F35; --muted:#9AA098;
     }
   }
   :root[data-theme="dark"]{
@@ -130,6 +131,7 @@
   .res-path .arrow{color:var(--accent);margin:0 6px;}
   .band-chip{display:inline-block;font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;padding:6px 12px;border-radius:20px;font-weight:500;}
   .band-1{background:var(--rose-soft);color:var(--rose);}
+  .band-blocked{background:var(--accent-soft);color:var(--accent);}
   .band-2{background:var(--rose-soft);color:var(--rose);}
   .band-3{background:var(--teal-soft);color:var(--teal);}
   .band-4{background:var(--teal-soft);color:var(--teal);}
@@ -485,9 +487,11 @@ function computeResults(){
   rows.forEach(r=>{ if(!r.blind){ nonBlindSum+=r.prioridad; nonBlindMax+=r.reqObj*r.peso; } });
   const nonBlindRatio = nonBlindMax>0 ? nonBlindSum/nonBlindMax : 0;
 
+  let blindBlocked = false;
   if(band===1 && blindOpen>=2 && nonBlindRatio<=0.35){
+    blindBlocked = true;
     bandInfo[1] = {
-      label:"Recién arrancando el camino",
+      label:"Bloqueado por brechas ciegas",
       text:`Tu nivel general no es el problema —mirá los puntajes por categoría—, pero hay ${blindOpen} competencias que tu rol actual (${actual}) nunca te exige practicar, así que quedan sin demostrar. Cerrarlas a propósito es lo único que te separa del salto a ${objetivo}.`
     };
   }
@@ -506,7 +510,7 @@ function computeResults(){
 
   const evidencePct = highTotal>0 ? Math.round(100*highWithEvidence/highTotal) : null;
 
-  return {objetivo, actual, band, bandInfo:bandInfo[band], catPuntaje, totalPuntaje, blindRows, top3, evidencePct, highTotal, rows};
+  return {objetivo, actual, band, blindBlocked, bandInfo:bandInfo[band], catPuntaje, totalPuntaje, blindRows, top3, evidencePct, highTotal, rows};
 }
 
 /* ============ CAPTURE (n8n webhook) ============ */
@@ -739,7 +743,7 @@ function render(){
     app.innerHTML = `
     <div class="res-head">
       <div class="res-path">${r.actual}<span class="arrow">→</span>${r.objetivo}</div>
-      <span class="band-chip band-${r.band}">${r.bandInfo.label}</span>
+      <span class="band-chip ${r.blindBlocked ? 'band-blocked' : 'band-'+r.band}">${r.bandInfo.label}</span>
       <div class="band-text">${r.bandInfo.text}</div>
     </div>
     <div class="grid2">
