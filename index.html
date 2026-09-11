@@ -164,6 +164,7 @@
   .pri-card .action b, .blind-card .action b{color:var(--accent);}
 
   .warn{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--surface);border-radius:8px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:var(--muted);margin-top:18px;}
+  .res-head .warn{flex-basis:100%;margin-top:12px;}
 
   .capture{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:20px 22px;margin-top:20px;}
   .capture h2{font-size:16px;margin-bottom:6px;}
@@ -382,7 +383,7 @@ const Q = [
 ];
 
 /* ============ STATE ============ */
-const state = { screen:'disclaimer', rolActual:null, i:0, answers:{}, email:'', honeypot:'', captureStatus:'idle', termsExpanded:false, disclaimerChecked:false, termsScrolledToEnd:false, termsWarning:false, helpExpanded:false };
+const state = { screen:'disclaimer', rolActual:null, tenure:null, i:0, answers:{}, email:'', honeypot:'', captureStatus:'idle', termsExpanded:false, disclaimerChecked:false, termsScrolledToEnd:false, termsWarning:false, helpExpanded:false };
 
 const FAQ = [
   {q:"¿Qué significa la banda de cercanía (Recién arrancando / En desarrollo activo / Cerca del salto / Listo para el salto)?",
@@ -419,7 +420,14 @@ function toggleDisclaimerCheck(checked){
 function acceptDisclaimer(){ if(state.disclaimerChecked){ state.screen='intro'; render(); } }
 function toggleHelp(){ state.helpExpanded = !state.helpExpanded; render(); }
 
-function start(rol){ state.rolActual = rol; state.screen='quiz'; state.i=0; render(); }
+const TENURE_OPTS = [
+  {label:"Menos de 6 meses", cap:2},
+  {label:"Entre 6 y 17 meses", cap:3},
+  {label:"18 meses o más", cap:null}
+];
+
+function start(rol){ state.rolActual = rol; state.screen='tenure'; render(); }
+function selectTenure(idx){ state.tenure = idx; state.screen='quiz'; state.i=0; render(); }
 function selectNivel(qid, idx){
   state.answers[qid].nivel = idx;
   if(idx < 3) state.answers[qid].ev = null;
@@ -435,7 +443,7 @@ function canAdvance(qid){
 function next(){ if(state.i < Q.length-1){ state.i++; render(); } else { state.screen='results'; render(); } }
 function prev(){ if(state.i>0){ state.i--; render(); } }
 function restart(){
-  state.screen='intro'; state.rolActual=null; state.i=0; state.email=''; state.captureStatus='idle';
+  state.screen='intro'; state.rolActual=null; state.tenure=null; state.i=0; state.email=''; state.captureStatus='idle';
   Q.forEach(q=> state.answers[q.id]={nivel:null,ev:null});
   render();
 }
@@ -479,6 +487,14 @@ function computeResults(){
     3:{label:"Cerca del salto", text:"Tu perfil se acerca a lo que pide el rol objetivo. No quedan brechas ciegas abiertas y las brechas restantes son manejables con foco en las prioritarias."},
     4:{label:"Listo para el salto", text:"Tu perfil demostrado ya cubre casi todo lo que pide el rol objetivo, sin brechas ciegas pendientes. Vale la pena buscar la conversación de transición."}
   };
+
+  // Techo de banda por antigüedad en el rol: con poco tiempo, el cálculo por respuestas
+  // puede quedar mejor de lo realista — se topea, pero nunca se sube (solo puede bajar la banda).
+  const bandSinTope = band;
+  const tope = (state.tenure!=null) ? TENURE_OPTS[state.tenure].cap : null;
+  let tenureCapped = false;
+  if(tope!=null && band>tope){ band = tope; tenureCapped = true; }
+
   // Banda 1 tiene dos causas muy distintas: nivel general bajo en todo, o un perfil sólido
   // bloqueado solo por brechas ciegas (blindOpen>=2). Para distinguirlas, medimos el ratio
   // de brecha SIN contar las competencias ciegas — si ese ratio ya sería banda 2 o mejor,
@@ -510,7 +526,7 @@ function computeResults(){
 
   const evidencePct = highTotal>0 ? Math.round(100*highWithEvidence/highTotal) : null;
 
-  return {objetivo, actual, band, blindBlocked, bandInfo:bandInfo[band], catPuntaje, totalPuntaje, blindRows, top3, evidencePct, highTotal, rows};
+  return {objetivo, actual, band, blindBlocked, tenureCapped, bandSinTopeLabel: bandInfo[bandSinTope].label, bandInfo:bandInfo[band], catPuntaje, totalPuntaje, blindRows, top3, evidencePct, highTotal, rows};
 }
 
 /* ============ CAPTURE (n8n webhook) ============ */
@@ -535,7 +551,8 @@ async function submitCapture(ev){
     timestamp: new Date().toISOString(),
     rol_actual: r.actual,
     rol_objetivo: r.objetivo,
-    banda: { nivel: r.band, label: r.bandInfo.label },
+    antiguedad_en_rol: TENURE_OPTS[state.tenure].label,
+    banda: { nivel: r.band, label: r.bandInfo.label, ajustada_por_antiguedad: r.tenureCapped, banda_sin_ajuste: r.tenureCapped ? r.bandSinTopeLabel : null },
     puntaje_total: Number(r.totalPuntaje.toFixed(2)),
     puntaje_por_categoria: Object.fromEntries(Object.entries(r.catPuntaje).map(([c,v])=>[CATS[c], Number(v.toFixed(2))])),
     brechas_ciegas: r.blindRows.map(row=>row.q.texto),
@@ -638,6 +655,19 @@ function render(){
         </button>
       </div>
       <div class="credit">Un diagnóstico de Reunión de Forecast</div>
+    </div>`;
+    return;
+  }
+
+  if(state.screen==='tenure'){
+    app.innerHTML = `
+    <div class="intro">
+      <div class="eyebrow">${state.rolActual} · antes de arrancar</div>
+      <h1>¿Hace cuánto estás en este rol?</h1>
+      <p>Con poco tiempo en el rol es esperable que varias competencias todavía estén en desarrollo, incluso si tus respuestas dan bien — lo usamos para que el resultado sea realista.</p>
+      <div class="options">
+        ${TENURE_OPTS.map((t,idx)=>`<button class="opt" onclick="selectTenure(${idx})">${t.label}</button>`).join('')}
+      </div>
     </div>`;
     return;
   }
@@ -745,6 +775,7 @@ function render(){
       <div class="res-path">${r.actual}<span class="arrow">→</span>${r.objetivo}</div>
       <span class="band-chip ${r.blindBlocked ? 'band-blocked' : 'band-'+r.band}">${r.bandInfo.label}</span>
       <div class="band-text">${r.bandInfo.text}</div>
+      ${r.tenureCapped ? `<div class="warn">Como llevás ${TENURE_OPTS[state.tenure].label.toLowerCase()} en este rol, ajustamos tu banda calculada (que por tus respuestas hubiera sido "${r.bandSinTopeLabel}") a esta — la industria suele esperar un desarrollo de al menos 18 meses antes de este tipo de salto.</div>` : ''}
     </div>
     <div class="grid2">
       <div class="panel">
