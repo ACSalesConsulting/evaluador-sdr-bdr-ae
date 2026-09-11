@@ -74,6 +74,14 @@
   .legal-full ol.alpha{margin:0 0 12px;padding-left:20px;}
   .legal-full ol.alpha li{font-size:13px;line-height:1.6;color:var(--muted);margin-bottom:4px;}
   .terms-warn{font-size:13px;color:var(--rose);margin:2px 0 0;}
+
+  /* ---------- Ayuda / FAQ ---------- */
+  .faq-toggle{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:14px;color:var(--accent);font-weight:500;margin:20px 0 0;}
+  .faq{background:var(--surface);border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:6px 18px 18px;margin:0 0 20px;}
+  .faq-item{padding:14px 0;border-top:1px solid var(--line);}
+  .faq-item:first-child{border-top:none;}
+  .faq-item .q{font-weight:600;font-size:14.5px;margin-bottom:6px;}
+  .faq-item .a{font-size:13.5px;line-height:1.6;color:var(--muted);}
   .check-row{display:flex;align-items:flex-start;gap:10px;margin:18px 0;cursor:pointer;font-size:14.5px;line-height:1.5;}
   .check-row input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent);flex-shrink:0;}
 
@@ -372,7 +380,22 @@ const Q = [
 ];
 
 /* ============ STATE ============ */
-const state = { screen:'disclaimer', rolActual:null, i:0, answers:{}, email:'', honeypot:'', captureStatus:'idle', termsExpanded:false, disclaimerChecked:false, termsScrolledToEnd:false, termsWarning:false };
+const state = { screen:'disclaimer', rolActual:null, i:0, answers:{}, email:'', honeypot:'', captureStatus:'idle', termsExpanded:false, disclaimerChecked:false, termsScrolledToEnd:false, termsWarning:false, helpExpanded:false };
+
+const FAQ = [
+  {q:"¿Qué significa la banda de cercanía (Recién arrancando / En desarrollo activo / Cerca del salto / Listo para el salto)?",
+   a:"No es un porcentaje ni un puntaje único — es una categoría calculada por reglas, que combina cuántas brechas te faltan cerrar con si tenés brechas ciegas abiertas. A propósito no te decimos \"estás 68% listo\": esa precisión sería falsa, no la podemos sostener."},
+  {q:"¿Qué es una \"brecha ciega\"?",
+   a:"Es una competencia que tu rol actual casi no te exige practicar, pero que el rol objetivo pide al máximo nivel. No se cierra sola haciendo bien tu trabajo de todos los días — hay que buscarla a propósito. Por eso aparece señalada aparte, incluso si tu nivel general es alto."},
+  {q:"¿Por qué me piden evidencia cuando pongo un puntaje alto?",
+   a:"Porque la autoevaluación sola tiende a inflarse sin que te des cuenta. Un puntaje alto sin nadie que lo haya confirmado desde afuera es intuición, no diagnóstico — por eso, si menos de la mitad de tus puntajes altos tienen evidencia real, te lo decimos explícitamente al final."},
+  {q:"¿Esto sirve para pedir un ascenso o para que evalúen mi desempeño?",
+   a:"No. Es autodiagnóstico personal, pensado para responder una sola pregunta: si querés llegar al próximo rol, ¿qué te falta? No fue diseñado ni validado para procesos de selección, evaluación de desempeño, ni como fundamento de un reclamo laboral. Los términos completos de la portada explican esto con más detalle."},
+  {q:"¿Qué pasa con mi email y mis respuestas?",
+   a:"Se usan para mandarte tu propio resultado por mail y, si corresponde, para contactarte con recursos relacionados a tu próximo paso. No se comparten con terceros."},
+  {q:"¿Por qué SDR y BDR no son simplemente un escalón del mismo camino?",
+   a:"Porque la diferencia entre ambos es de dirección, no de jerarquía: el SDR califica demanda que ya existe (inbound), el BDR genera demanda que no existe (outbound). Por eso hay competencias — como discovery y calificación — donde el SDR pide más nivel que el BDR, aunque BDR suene \"más avanzado\"."}
+];
 Q.forEach(q=> state.answers[q.id] = {nivel:null, ev:null});
 
 function toggleTerms(){ state.termsExpanded = !state.termsExpanded; render(); }
@@ -392,6 +415,7 @@ function toggleDisclaimerCheck(checked){
   render();
 }
 function acceptDisclaimer(){ if(state.disclaimerChecked){ state.screen='intro'; render(); } }
+function toggleHelp(){ state.helpExpanded = !state.helpExpanded; render(); }
 
 function start(rol){ state.rolActual = rol; state.screen='quiz'; state.i=0; render(); }
 function selectNivel(qid, idx){
@@ -736,6 +760,8 @@ function render(){
         </div>
       </div>
     </div>
+    <button class="faq-toggle" onclick="toggleHelp()">${state.helpExpanded ? 'Ocultar cómo interpretar tu resultado ▴' : '¿Cómo interpretar tu resultado? ▾'}</button>
+    ${state.helpExpanded ? `<div class="faq">${FAQ.map(f=>`<div class="faq-item"><div class="q">${f.q}</div><div class="a">${f.a}</div></div>`).join('')}</div>` : ''}
     ${captureHtml}
     <div class="footer-disc">Recordá: este resultado es autodiagnóstico. No compara tu perfil con el de otras personas y no debería usarse en procesos de selección ni de evaluación de desempeño.</div>
     <button class="btn restart" onclick="restart()">Volver a empezar</button>
