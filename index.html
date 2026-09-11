@@ -159,7 +159,8 @@
   .pri-card{border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:10px;}
   .pri-card .rank{font-family:var(--font-mono);font-size:11px;color:var(--accent);letter-spacing:.05em;}
   .pri-card .name{font-family:var(--font-display);font-size:17px;font-weight:600;margin:2px 0 4px;}
-  .pri-card .cat{font-size:12px;color:var(--muted);margin-bottom:8px;}
+  .pri-card .cat{font-size:12px;color:var(--muted);margin-bottom:4px;}
+  .pri-card .target{font-size:13px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:8px;}
   .pri-card .action, .blind-card .action{font-size:13.5px;line-height:1.5;background:var(--paper);border-radius:6px;padding:9px 12px;margin-top:8px;}
   .pri-card .action b, .blind-card .action b{color:var(--accent);}
 
@@ -557,10 +558,10 @@ async function submitCapture(ev){
     puntaje_por_categoria: Object.fromEntries(Object.entries(r.catPuntaje).map(([c,v])=>[CATS[c], Number(v.toFixed(2))])),
     brechas_ciegas: r.blindRows.map(row=>({
       competencia: row.q.texto,
-      porque: `Tu rol actual (${r.actual}) pide nivel ${row.reqAct} acá; ${r.objetivo} pide nivel 4. No se cierra solo con el trabajo diario — hay que buscarlo a propósito.`,
+      porque: `Esto es lo que se espera en ${r.objetivo}: "${row.q.niveles[row.reqObj]}" No se cierra solo con el trabajo diario — hay que buscarlo a propósito.`,
       accion: accionPara(row.q.metodo)
     })),
-    top3_prioridades: r.top3.map(row=>({competencia:row.q.texto, categoria:CATS[row.q.cat], brecha:row.brecha, accion:accionPara(row.q.metodo)})),
+    top3_prioridades: r.top3.map(row=>({competencia:row.q.texto, categoria:CATS[row.q.cat], objetivo_texto:row.q.niveles[row.reqObj], accion:accionPara(row.q.metodo)})),
     respuestas_detalle: r.rows.map(row=>({competencia:row.q.texto, nivel:row.nivel, evidencia_index: state.answers[row.q.id].ev}))
   };
 
@@ -741,7 +742,7 @@ function render(){
       blindHtml = r.blindRows.map(row=>`
         <div class="blind-card">
           <div class="name">${row.q.texto}</div>
-          <div class="why">Tu rol actual (${r.actual}) pide nivel ${row.reqAct} acá; el rol objetivo (${r.objetivo}) pide nivel 4. No se cierra solo con el trabajo diario — hay que buscarlo a propósito.</div>
+          <div class="why">Esto es lo que se espera en ${r.objetivo}: "${row.q.niveles[row.reqObj]}" No se cierra solo con el trabajo diario — hay que buscarlo a propósito.</div>
           <div class="action"><b>Cómo verificarlo:</b> ${accionPara(row.q.metodo)}</div>
         </div>`).join('');
     } else {
@@ -752,7 +753,8 @@ function render(){
       <div class="pri-card">
         <div class="rank">PRIORIDAD ${idx+1}${row.blind?' · PUNTO CIEGO':''}</div>
         <div class="name">${row.q.texto}</div>
-        <div class="cat">${CATS[row.q.cat]} · brecha de ${row.brecha} nivel${row.brecha>1?'es':''}</div>
+        <div class="cat">${CATS[row.q.cat]}</div>
+        <div class="target">Lo que se espera en ${r.objetivo}: "${row.q.niveles[row.reqObj]}"</div>
         <div class="action"><b>Cómo verificarlo:</b> ${accionPara(row.q.metodo)}</div>
       </div>`).join('') : `<div class="neutral-note">No hay brechas priorizables: tu nivel actual ya cubre lo que pide ${r.objetivo} en las 21 competencias.</div>`;
 
