@@ -392,7 +392,7 @@ const FAQ = [
   {q:"¿Esto sirve para pedir un ascenso o para que evalúen mi desempeño?",
    a:"No. Es autodiagnóstico personal, pensado para responder una sola pregunta: si querés llegar al próximo rol, ¿qué te falta? No fue diseñado ni validado para procesos de selección, evaluación de desempeño, ni como fundamento de un reclamo laboral. Los términos completos de la portada explican esto con más detalle."},
   {q:"¿Qué pasa con mi email y mis respuestas?",
-   a:"Se usan para mandarte tu propio resultado por mail y, si corresponde, para contactarte con recursos relacionados a tu próximo paso. No se comparten con terceros."},
+   a:"Se usan para mandarte tu propio resultado por mail. No se comparten con terceros."},
   {q:"¿Por qué SDR y BDR no son simplemente un escalón del mismo camino?",
    a:"Porque la diferencia entre ambos es de dirección, no de jerarquía: el SDR califica demanda que ya existe (inbound), el BDR genera demanda que no existe (outbound). Por eso hay competencias — como discovery y calificación — donde el SDR pide más nivel que el BDR, aunque BDR suene \"más avanzado\"."}
 ];
@@ -724,7 +724,7 @@ function render(){
     } else {
       captureHtml = `<div class="capture">
         <h2>¿Querés recibir este resultado por mail?</h2>
-        <p>También podemos usarlo para contactarte con recursos puntuales para tu próximo paso. Nunca lo compartimos con terceros.</p>
+        <p>Lo usamos únicamente para mandarte tu resultado. Nunca lo compartimos con terceros.</p>
         <form onsubmit="submitCapture(event)">
           <div class="capture-row">
             <input id="cap-email" type="email" placeholder="tu@email.com" required>
