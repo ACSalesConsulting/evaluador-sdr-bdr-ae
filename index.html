@@ -482,10 +482,10 @@ function computeResults(){
   else band=4;
 
   const bandInfo = {
-    1:{label:"Recién arrancando el camino", text:"Tu perfil actual está lejos de lo que pide el rol objetivo, con brechas grandes en varias competencias. Es un buen momento para construir base antes de apuntar a la transición."},
-    2:{label:"En desarrollo activo", text:"Estás trabajando hacia el rol objetivo, pero todavía hay brechas relevantes —incluido al menos un punto ciego, si aplica— que necesitan foco deliberado."},
-    3:{label:"Cerca del salto", text:"Tu perfil se acerca a lo que pide el rol objetivo. No quedan puntos ciegos abiertos y las brechas restantes son manejables con foco en las prioritarias."},
-    4:{label:"Listo para el salto", text:"Tu perfil demostrado ya cubre casi todo lo que pide el rol objetivo, sin puntos ciegos pendientes. Vale la pena buscar la conversación de transición."}
+    1:{label:"Recién arrancando", text:`Tu perfil actual está todavía lejos de lo que pide el próximo rol al que querés llegar (nota: esta herramienta usa el orden SDR → BDR → AE para definir "el próximo rol", aunque eso no implica una jerarquía de nivel — ver "¿Cómo interpretar tu resultado?"), con brechas grandes en varias competencias que se suelen pedir para esos roles. Este es un buen momento para construir una base sólida antes de apuntar a la transición al próximo rol.`},
+    2:{label:"En pleno desarrollo", text:`Estás trabajando para que te promuevan a ${objetivo}, pero todavía hay brechas relevantes entre tu nivel de madurez en competencias que son claves para ese rol, y el que se espera para alguien que ingresa a ese rol. Ojo con los puntos ciegos.`},
+    3:{label:"Estás cerca del salto", text:`Tu perfil, en base a la madurez en las competencias que evalúa esta herramienta, se acerca a lo que pide el rol de ${objetivo} en general. Una buena manera de validar esto es preguntarle a tu jefe (o al jefe del equipo al que querés pasar), cuáles de estas competencias deberías priorizar para desarrollar. No quedan puntos ciegos abiertos y las brechas restantes son manejables con foco en las prioritarias.`},
+    4:{label:"¡Estás listo para el salto!", text:`Tu perfil demostrado ya cubre casi todo lo que pide el rol de ${objetivo}, sin puntos ciegos pendientes o notables. Recordá que esta es una herramienta educativa que no está conectada a los sistemas de tu empresa, y la auto-evaluación que acabás de hacer debe ser usada como herramienta de auto-reflexión únicamente. Dicho esto, puede que sea un buen momento para pedirle feedback a tu jefe y comenzar la conversación de una posible transición.`}
   };
 
   // Techo de banda por antigüedad en el rol: con poco tiempo, el cálculo por respuestas
@@ -507,8 +507,8 @@ function computeResults(){
   if(band===1 && blindOpen>=2 && nonBlindRatio<=0.35){
     blindBlocked = true;
     bandInfo[1] = {
-      label:"Bloqueado por puntos ciegos",
-      text:`Tu nivel general no es el problema —mirá los puntajes por categoría—, pero hay ${blindOpen} competencias que tu rol actual (${actual}) nunca te exige practicar, así que quedan sin demostrar. Cerrarlas a propósito es lo único que te separa del salto a ${objetivo}.`
+      label:"Encaminado, pero con puntos ciegos",
+      text:`Tu nivel general por cada grupo de competencias clave para el próximo rol no es un problema —mirá los puntajes por categoría—, de hecho ¡vas por buen camino! Hay, sin embargo, ${blindOpen} competencias que tu rol actual (${actual}) nunca te exige practicar, así que quedan sin practicar, desarrollar o demostrar. Enfocarte en ellas, desarrollarlas, puede ayudarte a completar tu perfil y dar el salto a ${objetivo}.`
     };
   }
 
