@@ -552,11 +552,15 @@ async function submitCapture(ev){
     rol_actual: r.actual,
     rol_objetivo: r.objetivo,
     antiguedad_en_rol: TENURE_OPTS[state.tenure].label,
-    banda: { nivel: r.band, label: r.bandInfo.label, ajustada_por_antiguedad: r.tenureCapped, banda_sin_ajuste: r.tenureCapped ? r.bandSinTopeLabel : null },
+    banda: { nivel: r.band, label: r.bandInfo.label, texto: r.bandInfo.text, ajustada_por_antiguedad: r.tenureCapped, banda_sin_ajuste: r.tenureCapped ? r.bandSinTopeLabel : null },
     puntaje_total: Number(r.totalPuntaje.toFixed(2)),
     puntaje_por_categoria: Object.fromEntries(Object.entries(r.catPuntaje).map(([c,v])=>[CATS[c], Number(v.toFixed(2))])),
-    brechas_ciegas: r.blindRows.map(row=>row.q.texto),
-    top3_prioridades: r.top3.map(row=>({competencia:row.q.texto, categoria:CATS[row.q.cat], brecha:row.brecha, metodo:row.q.metodo})),
+    brechas_ciegas: r.blindRows.map(row=>({
+      competencia: row.q.texto,
+      porque: `Tu rol actual (${r.actual}) pide nivel ${row.reqAct} acá; ${r.objetivo} pide nivel 4. No se cierra solo con el trabajo diario — hay que buscarlo a propósito.`,
+      accion: accionPara(row.q.metodo)
+    })),
+    top3_prioridades: r.top3.map(row=>({competencia:row.q.texto, categoria:CATS[row.q.cat], brecha:row.brecha, accion:accionPara(row.q.metodo)})),
     respuestas_detalle: r.rows.map(row=>({competencia:row.q.texto, nivel:row.nivel, evidencia_index: state.answers[row.q.id].ev}))
   };
 
