@@ -73,6 +73,7 @@
   .legal-full p b{color:var(--ink);}
   .legal-full ol.alpha{margin:0 0 12px;padding-left:20px;}
   .legal-full ol.alpha li{font-size:13px;line-height:1.6;color:var(--muted);margin-bottom:4px;}
+  .terms-warn{font-size:13px;color:var(--rose);margin:2px 0 0;}
   .check-row{display:flex;align-items:flex-start;gap:10px;margin:18px 0;cursor:pointer;font-size:14.5px;line-height:1.5;}
   .check-row input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent);flex-shrink:0;}
 
@@ -371,11 +372,25 @@ const Q = [
 ];
 
 /* ============ STATE ============ */
-const state = { screen:'disclaimer', rolActual:null, i:0, answers:{}, email:'', honeypot:'', captureStatus:'idle', termsExpanded:false, disclaimerChecked:false };
+const state = { screen:'disclaimer', rolActual:null, i:0, answers:{}, email:'', honeypot:'', captureStatus:'idle', termsExpanded:false, disclaimerChecked:false, termsScrolledToEnd:false, termsWarning:false };
 Q.forEach(q=> state.answers[q.id] = {nivel:null, ev:null});
 
 function toggleTerms(){ state.termsExpanded = !state.termsExpanded; render(); }
-function toggleDisclaimerCheck(checked){ state.disclaimerChecked = checked; render(); }
+function onTermsScroll(el){
+  if(!state.termsScrolledToEnd && el.scrollTop + el.clientHeight >= el.scrollHeight - 4){
+    state.termsScrolledToEnd = true;
+  }
+}
+function toggleDisclaimerCheck(checked){
+  if(checked && !state.termsScrolledToEnd){
+    state.disclaimerChecked = false;
+    state.termsWarning = true;
+  } else {
+    state.disclaimerChecked = checked;
+    state.termsWarning = false;
+  }
+  render();
+}
 function acceptDisclaimer(){ if(state.disclaimerChecked){ state.screen='intro'; render(); } }
 
 function start(rol){ state.rolActual = rol; state.screen='quiz'; state.i=0; render(); }
@@ -564,11 +579,12 @@ function render(){
         <p>Los puntajes salen de tu propia percepción, y la percepción propia difiere sistemáticamente de la evaluación externa. La matriz de resultados que se utiliza no fue consultada con tu empleador ni homologada por el mismo, sino desarrollada con el único fin de ser utilizada en esta aplicación de uso gratuito.</p>
       </div>
       <button class="terms-toggle" onclick="toggleTerms()">${state.termsExpanded ? 'Ocultar términos y condiciones completos ▴' : 'Ver términos y condiciones completos ▾'}</button>
-      ${state.termsExpanded ? `<div class="legal-full">${TERMINOS_COMPLETOS}</div>` : ''}
+      ${state.termsExpanded ? `<div class="legal-full" onscroll="onTermsScroll(this)">${TERMINOS_COMPLETOS}</div>` : ''}
       <label class="check-row">
         <input type="checkbox" ${state.disclaimerChecked ? 'checked' : ''} onchange="toggleDisclaimerCheck(this.checked)">
         <span>Leí y entiendo lo anterior.</span>
       </label>
+      ${state.termsWarning ? `<div class="terms-warn">Para tildar esto, primero abrí "Ver términos y condiciones completos" y leelos hasta el final.</div>` : ''}
       <button class="btn primary" onclick="acceptDisclaimer()" ${state.disclaimerChecked ? '' : 'disabled'}>Continuar</button>
     </div>`;
     return;
